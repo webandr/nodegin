@@ -11,7 +11,7 @@ const { exec } = require('child_process');
 const path = require('path');
 
 // const app = express();
-const port = 3000;
+const port = 4000;
 
 // /home/a58355/web/perervaad.ru/public_html/expressapp/encryption
 // скопировать в файлы в папке encription в соответствии с комментариями ниже 

@@ -14,5 +14,5 @@ node nodegin.js
 на порт прошитый в коде (3000) с сертификатами (SSL Key, SSL Certificate, SSL Certificate Authority / Intermediate ) прям лежащими по пути "рядом" с приложением.
 
 там фишка в том что нужно на VPS поставить **pithon3** + пакеты **docxtpl, docx2pdf, wkhtmltopdf**
-а вот npm по идее из package должна "подхватиться" и поставить но не факт - тогда по мере ругания на команду node nodegin.js доставлять. точно надо **moment, express, axios, child_process**
+а вот npm по идее из package должна "подхватиться" и поставить но не факт - тогда по мере ругания на команду node nodegin.js доставлять. точно надо **moment, express, axios, express-force-ssl**
 
