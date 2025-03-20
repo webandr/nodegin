@@ -63,6 +63,8 @@ async function deleteFile(filePath) {
         }
     }
 }
+
+
 // -------------------------------------------------------------------------------------------------------------------------------
 
 
@@ -217,3 +219,166 @@ app.post('/downloaddoc', (req, res) => {
     });
 });
 
+// **************************************************************************************
+// АВТОРИЗАЦИЯ 
+// **************************************************************************************
+async function getPadAuth(){
+    res = {};
+    // Заголовки запроса
+    const headers = {
+        'Content-Type': 'application/json'
+    };
+
+    var data = JSON.stringify({
+        "login": "user1",
+        "password": "password1",
+        "tokenKey": "2a2b-3c4d-5e6f-7g8h"
+    });
+
+    try {
+        // Отправка запроса к Hugging Face API
+        const response = await axios.post(API_PERERVA_URL + '/auth', data, { headers });
+
+        // Обработка ответа
+        if (response.status === 200) {
+            const result = response.data;
+            console.log(result);
+            console.log(result.token);
+            res = {status: response.status, authKey:  result.token};
+            return res;
+        } else {
+            res = {status: 500, error: 'Ошибка при запросе к perervaad.ru' };
+            return res;
+        }
+    } catch (error) {
+        console.error('Ошибка:', error.message);
+        res = {status: 500, error: 'Что то пошло не так. Ошибка в функции запроса к perervaad.ru' };
+        return res;
+    }
+
+}
+// **************************************************************************************
+//  ПОЛУЧИТЬ КЛЮЧ ДЛЯ ОЗВУЧКИ 
+// **************************************************************************************
+async function getSayitKey(){
+    let authRes =  await getPadAuth();
+    res = {};
+    if (authRes.status!=200 ){
+        res = {status: 500, error: 'Ошибка при авторизации на perervaad.ru' + authT};
+        return res;
+    }
+    authT = authRes.authKey;
+
+    // URL API
+    const API_URL = API_PERERVA_URL + '/sayitat';
+
+    // Заголовки запроса
+    const headers = {
+        'Authorization': `Bearer ${authT}`,
+        'Content-Type': 'application/json'
+    };
+
+    try {
+        // Отправка запроса к Hugging Face API
+        const response = await axios.get(API_URL, { headers });
+
+        // Обработка ответа
+        if (response.status === 200) {
+            const result = response.data;
+            console.log(result.access_token);
+            res = {status: response.status, theKey: result.access_token, authKey: authT};
+            return res;
+        } else {
+            res = {status: response.status, authKey: authT};
+            return res;
+        }
+    } catch (error) {
+        console.error('Ошибка:', error.message);
+        res = {status: 500,  error: 'Ошибка в getSayKey ' + error.message };
+        return res;
+    }
+};
+
+// text 2 speach 
+app.post("/sayit-ssp", async (req, res) => {
+    var result;
+
+    let sayitKey =  await getSayitKey();
+    console.log(sayitKey);
+
+    const fileName = "res.wav"; //req.body.fileName;
+    if (!fileName) {
+        return res.status(400).json({ error: 'Имя файла не указано' });
+    }
+
+    //path.join(__dirname, fileName);
+    const filePath = path.join('/home/a58355/web/perervaad.ru/public_html/expressapp/', fileName); 
+    console.log(filePath);
+
+    // если не переданы данные, возвращаем ошибку
+    if(!req.body) return response.sendStatus(400);
+
+    console.log("request.body", req.body);
+   
+    process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = 0;
+
+    var options = {
+        'method': 'POST',
+        'hostname': 'smartspeech.sber.ru',
+        'path': '/rest/v1/text:synthesize?format=wav16&voice=May_24000',
+        'headers': {
+            'Content-Type': 'application/ssml',
+            'Authorization': 'Bearer ' + sayitKey.theKey
+        },
+      'maxRedirects': 20,
+      'responseType': 'arraybuffer'
+    };
+    
+    var reqst = https.request(options, function (res) {
+      var chunks = [];
+      var result;
+    
+      res.on("data", function (chunk) {
+        chunks.push(chunk);
+        return;
+      });
+    
+      res.on("end", function (chunk) {
+        var body = Buffer.concat(chunks);
+        //console.log(body);
+        //console.log("Текст распознан. Смотри " + __dirname + "\\" + fName); //body.toString()
+
+        if (fs.existsSync(filePath))
+                fs.unlinkSync(filePath);
+
+        var out = fs.createWriteStream(filePath);
+        out.write(body);
+        out.close;
+        
+        console.log("result", filePath);
+        //response.send(JSON.stringify({"result": fName}));
+
+        return;
+      });
+    
+      res.on("error", function (error) {
+        console.error(error);
+        response.send(JSON.stringify({"error": error.toString()}));
+        return;
+      });
+    });
+    
+    // получаем данные
+    var postData =  req.body.text;
+    
+    reqst.write(postData);
+    reqst.end();
+
+    // Отправка файла как содержимого ответа
+    res.sendFile(filePath, (err) => {
+        if (err) {
+            console.error('Ошибка при отправке файла:', err);
+            res.status(500).json({ error: 'Ошибка при отправке файла' });
+        }
+    });
+});
