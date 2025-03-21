@@ -15,15 +15,15 @@ const port = 4000;
 
 // // /home/a58355/web/perervaad.ru/public_html/expressapp/encryption
 // // скопировать в файлы в папке encription в соответствии с комментариями ниже 
-// var key = fs.readFileSync('/home/a58355/web/perervaad.ru/public_html/expressapp/encryption/private.key'); // <-- SSL Key 
-// var cert = fs.readFileSync( '/home/a58355/web/perervaad.ru/public_html/expressapp/encryption/primary.crt' );  // <--  SSL Certificate 
-// var ca = fs.readFileSync( '/home/a58355/web/perervaad.ru/public_html/expressapp/encryption/intermediate.crt' ); // <-- SSL Certificate Authority / Intermediate 
+var key = fs.readFileSync('/home/a58355/web/perervaad.ru/public_html/expressapp/encryption/private.key'); // <-- SSL Key 
+var cert = fs.readFileSync( '/home/a58355/web/perervaad.ru/public_html/expressapp/encryption/primary.crt' );  // <--  SSL Certificate 
+var ca = fs.readFileSync( '/home/a58355/web/perervaad.ru/public_html/expressapp/encryption/intermediate.crt' ); // <-- SSL Certificate Authority / Intermediate 
 
-// var options = {
-//     key: key,
-//     cert: cert,
-//     ca: ca
-//   };
+var options = {
+    key: key,
+    cert: cert,
+    ca: ca
+  };
 
 const app = express();
 
@@ -32,8 +32,8 @@ const app = express();
 
 // Запуск сервера
 var https = require('https');
-// https.createServer(options, app).listen(port);
-https.createServer(app).listen(port);
+https.createServer(options, app).listen(port);
+// https.createServer(app).listen(port);
 console.log(`Сервер запущен на http://localhost:${port}`);
 
 
@@ -310,12 +310,23 @@ app.post("/sayit-ssp", async (req, res) => {
     console.log(sayitKey);
 
     const fileName = "res.wav"; //req.body.fileName;
-    if (!fileName) {
-        return res.status(400).json({ error: 'Имя файла не указано' });
-    }
+    // if (!fileName) {
+    //     return res.status(400).json({ error: 'Имя файла не указано' });
+    // }
+
+    // Получаем текущую дату и время в нужном формате
+    const dateTime = moment().format('YYYYMMDD_HHmmss_SSS');
+
+    // Разделяем имя файла и расширение
+    const fileInfo = path.parse(fileName);
+
+    // Собираем новое имя файла с добавлением даты и времени
+    const newFileName = `${fileInfo.name}_${dateTime}${fileInfo.ext}`
+
 
     //path.join(__dirname, fileName);
-    const filePath = path.join('/home/a58355/web/perervaad.ru/public_html/expressapp/', fileName); 
+    const filePath = path.join('/home/a58355/web/perervaad.ru/public_html/expressapp/', newFileName); 
+
     console.log(filePath);
 
     // если не переданы данные, возвращаем ошибку
@@ -337,7 +348,7 @@ app.post("/sayit-ssp", async (req, res) => {
       'responseType': 'arraybuffer'
     };
     
-    var reqst = https.request(options, function (res) {
+    var reqst = https.request(options, async function (res) {
       var chunks = [];
       var result;
     
@@ -346,13 +357,10 @@ app.post("/sayit-ssp", async (req, res) => {
         return;
       });
     
-      res.on("end", function (chunk) {
+      res.on("end", async function (chunk) {
         var body = Buffer.concat(chunks);
         //console.log(body);
         //console.log("Текст распознан. Смотри " + __dirname + "\\" + fName); //body.toString()
-
-        if (fs.existsSync(filePath))
-                fs.unlinkSync(filePath);
 
         var out = fs.createWriteStream(filePath);
         out.write(body);
@@ -361,7 +369,29 @@ app.post("/sayit-ssp", async (req, res) => {
         console.log("result", filePath);
         //response.send(JSON.stringify({"result": fName}));
 
-        return;
+        waitForFile(filePath)
+            .then((fileExists) => {
+                if (fileExists) {
+                    console.log('Файл появился, можно продолжать.');
+                    // Отправка файла как содержимого ответа
+                    res.sendFile(filePath, async (err) => {
+                        if (err) {
+                            console.error('Ошибка при отправке файла:', err);
+                            res.status(500).json({ error: 'Ошибка при отправке файла' });
+                        } 
+                        else {
+                            console.log('Файл успешно передан:', filePath);
+                            await deleteFile(filePath);
+                        }
+                    });
+                } else {
+                    console.log('Файл не появился в течение заданного времени.');
+                }
+                })
+                .catch((err) => {
+                    console.error('Ошибка:', err);
+                });
+                return;
       });
     
       res.on("error", function (error) {
@@ -372,16 +402,54 @@ app.post("/sayit-ssp", async (req, res) => {
     });
     
     // получаем данные
-    var postData =  req.body.text;
+    var postData =  await req.body.text;
     
     reqst.write(postData);
     reqst.end();
 
-    // Отправка файла как содержимого ответа
-    res.sendFile(filePath, (err) => {
-        if (err) {
-            console.error('Ошибка при отправке файла:', err);
-            res.status(500).json({ error: 'Ошибка при отправке файла' });
-        }
-    });
+    
 });
+
+
+
+async function waitForFile(filePath, interval = 1000, timeout = 30000) {
+    const startTime = Date.now();
+
+    while (true) {
+        try {
+            // Проверяем наличие файла
+            await fsp.access(filePath);
+            console.log(`Файл "${filePath}" найден.`);
+            return true; // Файл найден
+        } catch (err) {
+            if (err.code !== 'ENOENT') {
+                // Если ошибка не связана с отсутствием файла, выбрасываем исключение
+                throw err;
+            }
+
+            // Проверяем, не истек ли таймаут
+            if (Date.now() - startTime > timeout) {
+                console.log(`Файл "${filePath}" не появился в течение ${timeout} мс.`);
+                return false; // Таймаут
+            }
+
+            // Ждем перед следующей проверкой
+            await new Promise((resolve) => setTimeout(resolve, interval));
+        }
+    }
+}   
+
+async function checkFileExists(filePath) {
+    try {
+        const stats = await fs.stat(filePath);
+        console.log('Файл существует.');
+        console.log('Размер файла:', stats.size, 'байт');
+        return true
+    } catch (err) {
+        if (err.code === 'ENOENT') {
+            console.log('Файл не существует.');
+        } else {
+            console.error('Ошибка при проверке файла:', err);
+        }
+    }
+}
