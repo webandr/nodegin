@@ -13,17 +13,17 @@ const path = require('path');
 // const app = express();
 const port = 4000;
 
-// /home/a58355/web/perervaad.ru/public_html/expressapp/encryption
-// скопировать в файлы в папке encription в соответствии с комментариями ниже 
-var key = fs.readFileSync('/home/a58355/web/perervaad.ru/public_html/expressapp/encryption/private.key'); // <-- SSL Key 
-var cert = fs.readFileSync( '/home/a58355/web/perervaad.ru/public_html/expressapp/encryption/primary.crt' );  // <--  SSL Certificate 
-var ca = fs.readFileSync( '/home/a58355/web/perervaad.ru/public_html/expressapp/encryption/intermediate.crt' ); // <-- SSL Certificate Authority / Intermediate 
+// // /home/a58355/web/perervaad.ru/public_html/expressapp/encryption
+// // скопировать в файлы в папке encription в соответствии с комментариями ниже 
+// var key = fs.readFileSync('/home/a58355/web/perervaad.ru/public_html/expressapp/encryption/private.key'); // <-- SSL Key 
+// var cert = fs.readFileSync( '/home/a58355/web/perervaad.ru/public_html/expressapp/encryption/primary.crt' );  // <--  SSL Certificate 
+// var ca = fs.readFileSync( '/home/a58355/web/perervaad.ru/public_html/expressapp/encryption/intermediate.crt' ); // <-- SSL Certificate Authority / Intermediate 
 
-var options = {
-    key: key,
-    cert: cert,
-    ca: ca
-  };
+// var options = {
+//     key: key,
+//     cert: cert,
+//     ca: ca
+//   };
 
 const app = express();
 
@@ -32,7 +32,8 @@ const app = express();
 
 // Запуск сервера
 var https = require('https');
-https.createServer(options, app).listen(port);
+// https.createServer(options, app).listen(port);
+https.createServer(app).listen(port);
 console.log(`Сервер запущен на http://localhost:${port}`);
 
 
