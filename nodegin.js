@@ -14,29 +14,43 @@ const config = require('./config.json');
 
 const options = {};
 
-// // /home/a58355/web/perervaad.ru/public_html/expressapp/encryption
-// // скопировать в файлы в папке encription в соответствии с комментариями ниже 
+// const app = express();
+const port = 4000;
+const app = express();
+
+// var http = require('http');
+// http.createServer(app).listen(3081);
+
+// // ************************************************************************************************
+// // gin_dev
+// // ************************************************************************************************
+// // // /home/a58355/web/perervaad.ru/public_html/expressapp/encryption
+// // // скопировать в файлы в папке encription в соответствии с комментариями ниже 
 // if (config.ssllocal) {
 //   options.key = fs.readFileSync(config.ssl.key);   // <-- SSL Key 
 //   options.cert = fs.readFileSync(config.ssl.cert); // <--  SSL Certificate 
 //   options.ca =  fs.readFileSync(config.ssl.ca);    // <-- SSL Certificate Authority / Intermediate 
 // }
 
-// const app = express();
-const port = 4000;
-
-const app = express();
-
-// var http = require('http');
-// http.createServer(app).listen(3081);
-
-// Запуск сервера
-var https = require('https');
+// // Запуск сервера
+// var https = require('https');
 // if (config.ssllocal) {
 //     https.createServer(options, app).listen(port);
 // } else{
-    https.createServer(app).listen(port);
+//     https.createServer(app).listen(port);
 // }
+
+// ************************************************************************************************
+// gin
+// ************************************************************************************************
+// Запуск сервера
+
+var https = require('https');
+https.createServer(app).listen(port);
+
+// ************************************************************************************************
+
+
 
 console.log(`Сервер запущен на http://localhost:${port}`);
 
@@ -319,17 +333,24 @@ app.post("/sayit-ssp", async (req, res) => {
     // }
 
     // Получаем текущую дату и время в нужном формате
-    const dateTime = moment().format('YYYYMMDD_HHmmss_SSS');
+    let dateTime = moment().format('YYYYMMDD_HHmmss_SSS');
 
     // Разделяем имя файла и расширение
     const fileInfo = path.parse(fileName);
 
     // Собираем новое имя файла с добавлением даты и времени
-    const newFileName = `${fileInfo.name}_${dateTime}${fileInfo.ext}`
+    let newFileName = `${fileInfo.name}_${dateTime}${fileInfo.ext}`
 
 
     //path.join(__dirname, fileName);
-    const filePath = path.join('/home/a58355/web/perervaad.ru/public_html/expressapp/', newFileName); 
+    let filePath = path.join('/home/a58355/web/perervaad.ru/public_html/expressapp/', newFileName); 
+
+    // Проверяем, существует ли файл, и если да, уменьшаем количество миллисекунд
+    while (fs.existsSync(filePath)) {
+        dateTime = moment().format('YYYYMMDD_HHmmss_SSS');
+        newFileName = `${fileInfo.name}_${dateTime}${fileInfo.ext}`;
+        filePath = path.join('/home/a58355/web/perervaad.ru/public_html/expressapp/', newFileName);
+    }
 
     console.log(filePath);
 
