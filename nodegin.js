@@ -16,11 +16,11 @@ const options = {};
 
 // // /home/a58355/web/perervaad.ru/public_html/expressapp/encryption
 // // скопировать в файлы в папке encription в соответствии с комментариями ниже 
-if (config.ssllocal) {
-  options.key = fs.readFileSync(config.ssl.key);   // <-- SSL Key 
-  options.cert = fs.readFileSync(config.ssl.cert); // <--  SSL Certificate 
-  options.ca =  fs.readFileSync(config.ssl.ca);    // <-- SSL Certificate Authority / Intermediate 
-}
+// if (config.ssllocal) {
+//   options.key = fs.readFileSync(config.ssl.key);   // <-- SSL Key 
+//   options.cert = fs.readFileSync(config.ssl.cert); // <--  SSL Certificate 
+//   options.ca =  fs.readFileSync(config.ssl.ca);    // <-- SSL Certificate Authority / Intermediate 
+// }
 
 // const app = express();
 const port = 4000;
@@ -32,11 +32,11 @@ const app = express();
 
 // Запуск сервера
 var https = require('https');
-if (config.ssllocal) {
-    https.createServer(options, app).listen(port);
-} else{
+// if (config.ssllocal) {
+//     https.createServer(options, app).listen(port);
+// } else{
     https.createServer(app).listen(port);
-}
+// }
 
 console.log(`Сервер запущен на http://localhost:${port}`);
 
