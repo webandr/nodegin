@@ -1,0 +1,8 @@
+{
+    "ssllocal": false,
+    "ssl": {
+      "key": "/home/a58355/web/perervaad.ru/public_html/expressapp/encryption/private.key",
+      "cert": "/home/a58355/web/perervaad.ru/public_html/expressapp/encryption/primary.crt",
+      "ca": "/home/a58355/web/perervaad.ru/public_html/expressapp/encryption/intermediate.crt"
+    }
+  }

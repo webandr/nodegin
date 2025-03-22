@@ -10,20 +10,20 @@ const axios = require('axios');
 const { exec } = require('child_process');
 const path = require('path');
 
-// const app = express();
-const port = 4000;
+const config = require('./config.json');
+
+const options = {};
 
 // // /home/a58355/web/perervaad.ru/public_html/expressapp/encryption
 // // скопировать в файлы в папке encription в соответствии с комментариями ниже 
-var key = fs.readFileSync('/home/a58355/web/perervaad.ru/public_html/expressapp/encryption/private.key'); // <-- SSL Key 
-var cert = fs.readFileSync( '/home/a58355/web/perervaad.ru/public_html/expressapp/encryption/primary.crt' );  // <--  SSL Certificate 
-var ca = fs.readFileSync( '/home/a58355/web/perervaad.ru/public_html/expressapp/encryption/intermediate.crt' ); // <-- SSL Certificate Authority / Intermediate 
+if (config.ssllocal) {
+  options.key = fs.readFileSync(config.ssl.key);   // <-- SSL Key 
+  options.cert = fs.readFileSync(config.ssl.cert); // <--  SSL Certificate 
+  options.ca =  fs.readFileSync(config.ssl.ca);    // <-- SSL Certificate Authority / Intermediate 
+}
 
-var options = {
-    key: key,
-    cert: cert,
-    ca: ca
-  };
+// const app = express();
+const port = 4000;
 
 const app = express();
 
@@ -32,8 +32,12 @@ const app = express();
 
 // Запуск сервера
 var https = require('https');
-https.createServer(options, app).listen(port);
-// https.createServer(app).listen(port);
+if (config.ssllocal) {
+    https.createServer(options, app).listen(port);
+} else{
+    https.createServer(app).listen(port);
+}
+
 console.log(`Сервер запущен на http://localhost:${port}`);
 
 
@@ -330,7 +334,7 @@ app.post("/sayit-ssp", async (req, res) => {
     console.log(filePath);
 
     // если не переданы данные, возвращаем ошибку
-    if(!req.body) return response.sendStatus(400);
+    if(!req.body) return res.sendStatus(400);
 
     console.log("request.body", req.body);
    
@@ -348,16 +352,16 @@ app.post("/sayit-ssp", async (req, res) => {
       'responseType': 'arraybuffer'
     };
     
-    var reqst = https.request(options, async function (res) {
+    var reqst = https.request(options, async function (resssp) {
       var chunks = [];
       var result;
     
-      res.on("data", function (chunk) {
+      resssp.on("data", function (chunk) {
         chunks.push(chunk);
         return;
       });
     
-      res.on("end", async function (chunk) {
+      resssp.on("end", async function (chunk) {
         var body = Buffer.concat(chunks);
         //console.log(body);
         //console.log("Текст распознан. Смотри " + __dirname + "\\" + fName); //body.toString()
