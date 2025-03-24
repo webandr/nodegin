@@ -18,8 +18,7 @@ const options = {};
 const port = 4000;
 const app = express();
 
-// var http = require('http');
-// http.createServer(app).listen(3081);
+
 
 // // ************************************************************************************************
 // // gin_dev
@@ -40,25 +39,20 @@ const app = express();
 //     https.createServer(app).listen(port);
 // }
 
+// var forceSsl = require('express-force-ssl');
+// app.use(forceSsl);
+
 // ************************************************************************************************
 // gin
 // ************************************************************************************************
 // Запуск сервера
 
-var https = require('https');
-https.createServer(app).listen(port);
-
+var http = require('http');
+http.createServer(app).listen(port);
 // ************************************************************************************************
 
-
-
-console.log(`Сервер запущен на http://localhost:${port}`);
-
-
-var forceSsl = require('express-force-ssl');
+console.log(`Сервер запущен. Порт: ${port}`);
 const { time } = require('console');
-app.use(forceSsl);
-
 
 // Middleware для обработки JSON
 app.use(express.json());
