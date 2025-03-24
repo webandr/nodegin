@@ -10,8 +10,6 @@ const axios = require('axios');
 const { exec } = require('child_process');
 const path = require('path');
 
-const config = require('./config.json');
-
 const options = {};
 
 // const app = express();
@@ -25,6 +23,9 @@ const app = express();
 // // ************************************************************************************************
 // // // /home/a58355/web/perervaad.ru/public_html/expressapp/encryption
 // // // скопировать в файлы в папке encription в соответствии с комментариями ниже 
+
+// const config = require('./config.json');
+
 // if (config.ssllocal) {
 //   options.key = fs.readFileSync(config.ssl.key);   // <-- SSL Key 
 //   options.cert = fs.readFileSync(config.ssl.cert); // <--  SSL Certificate 
